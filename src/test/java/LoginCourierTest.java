@@ -1,58 +1,68 @@
 import io.restassured.RestAssured;
+import jdk.jfr.Description;
 import org.junit.Before;
 import org.junit.Test;
-
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.Matchers.equalTo;
 
-public class LoginCourierTest extends ParentTest {
+public class LoginCourierTest {
 
     @Before
     public void setUp() {
         RestAssured.baseURI = URLs.COURIER_URL;
-        this.createCourier(FilePaths.COURIER_DATA);
+        CourierApi.createCourierSuccessfully();
     }
 
-    //курьер может авторизоваться; успешный запрос возвращает id.
     @Test
+    @Description("курьер может авторизоваться; успешный запрос возвращает id")
     public void logInCourier() {
-        this.loginCourier(FilePaths.COURIER_DATA).then().extract().path("id");
+        CourierApi.loginCourierSuccessfully().then().extract().path("id");
     }
 
-    //для авторизации нужно передать все обязательные поля;
-// если какого-то поля нет, запрос возвращает ошибку;
     @Test
-    public void logInErrorIfLackOfData() {
-        this.loginCourier(FilePaths.COURIER_LACK_OF_LOGIN_DATA)
+    @Description("для авторизации нужно передать все обязательные поля; " +
+            "если какого-то поля нет, запрос возвращает ошибку")
+    public void logInErrorWithMissingLogin() {
+        Courier courier = new Courier();
+        courier.setPassword(CourierConstantsData.PASSWORD);
+
+        CourierApi.loginCourier(courier) //na login
                 .then()
                 .assertThat()
-                .statusCode(ResponseCodes.LACK_OF_DATA_ERROR_CODE)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo(ErrorMessages.ERROR_MESSAGE_LOGIN_LACK_OF_DATA));
-
-        this.loginCourier(FilePaths.COURIER_LACK_OF_PASSWORD_DATA)
-                .then()
-                .statusCode(ResponseCodes.TIME_OUT_ERROR_CODE);
     }
 
-    //система вернёт ошибку, если неправильно указать логин или пароль;
     @Test
+    public void logInErrorWithMissingPassword() {
+        Courier courier = new Courier();
+        courier.setLogin(CourierConstantsData.LOGIN);
+
+        CourierApi.loginCourier(courier) //na password
+                .then()
+                .statusCode(SC_GATEWAY_TIMEOUT);
+    }
+
+    @Test
+    @Description("система вернёт ошибку, если неправильно указать логин или пароль")
     public void logInErrorInvalidData() {
-        this.loginCourier(FilePaths.COURIER_WRONG_PASSWORD_DATA)
+        CourierApi.loginCourier(CourierConstantsData.LOGIN, CourierConstantsData.WRONG_PASSWORD)
                 .then()
                 .assertThat()
                 .body("message", equalTo(ErrorMessages.ERROR_MESSAGE_PROFILE_NOT_FOUND))
                 .and()
-                .statusCode(ResponseCodes.PROFILE_NOT_EXIST_ERROR_CODE);
+                .statusCode(SC_NOT_FOUND);
     }
 
-    //если авторизоваться под несуществующим пользователем, запрос возвращает ошибку;
     @Test
+    @Description("если авторизоваться под несуществующим пользователем, запрос возвращает ошибку")
     public void logInNotExistCourierError() {
-        this.loginCourier(FilePaths.COURIER_WRONG_LOGIN_DATA)
+        CourierApi.loginCourier(CourierConstantsData.WRONG_LOGIN, CourierConstantsData.PASSWORD)
                 .then()
                 .assertThat()
                 .body("message", equalTo(ErrorMessages.ERROR_MESSAGE_PROFILE_NOT_FOUND))
                 .and()
-                .statusCode(ResponseCodes.PROFILE_NOT_EXIST_ERROR_CODE);
+                .statusCode(SC_NOT_FOUND);
     }
 }

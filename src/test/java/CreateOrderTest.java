@@ -3,9 +3,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import io.restassured.response.Response;
 import org.junit.Test;
+import static org.apache.http.HttpStatus.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import static io.restassured.RestAssured.given;
 
 @RunWith(Parameterized.class)
@@ -54,8 +54,7 @@ public class CreateOrderTest {
                 .when()
                 .post(URLs.CREATE_ORDER);
 
-        response.then().statusCode(ResponseCodes.CREATED_SUCCESS_CODE);
+        response.then().statusCode(SC_CREATED);
         Assert.assertNotNull(response.then().extract().path("track"));
     }
 }
-

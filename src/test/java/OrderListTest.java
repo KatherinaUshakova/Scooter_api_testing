@@ -2,8 +2,8 @@ import io.restassured.RestAssured;
 import org.junit.*;
 import io.restassured.response.Response;
 import org.junit.Before;
+import static org.apache.http.HttpStatus.*;
 import static io.restassured.RestAssured.given;
-
 
 public class OrderListTest {
 
@@ -17,6 +17,6 @@ public class OrderListTest {
        Response response = given().get(URLs.GET_ORDER_LIST);
 
        Assert.assertNotNull(response.getBody());
-       response.then().statusCode(ResponseCodes.OK_CODE);
+       response.then().statusCode(SC_OK);
     }
 }

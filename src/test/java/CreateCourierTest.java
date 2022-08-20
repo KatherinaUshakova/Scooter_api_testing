@@ -3,11 +3,10 @@ import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.apache.http.HttpStatus.*;
+import static org.hamcrest.CoreMatchers.equalTo;
 
-import static org.hamcrest.Matchers.equalTo;
-import static io.restassured.RestAssured.*;
-
-public class CreateCourierTest extends ParentTest{
+public class CreateCourierTest {
 
     @Before
     public void setUp() {
@@ -16,37 +15,27 @@ public class CreateCourierTest extends ParentTest{
 
     @After
     public void deleteCourier() {
-        Response response = loginCourier(FilePaths.COURIER_DATA);
+        Response response = CourierApi.loginCourierSuccessfully();
 
-        if (response.getStatusCode() == ResponseCodes.OK_CODE) {
-            deleteCourier(this.getCourierId(response));
+        if (response.getStatusCode() == SC_OK) {
+            int id = CourierApi.getCourierId(response);
+            CourierApi.deleteCourier(id);
         }
-    }
-
-    protected Integer getCourierId(Response loginCourier) {
-        return loginCourier
-                .then().extract().path("id");
-    }
-
-    protected void deleteCourier(Integer courierId) {
-        given()
-                .header("Content-type", "application/json")
-                .delete(URLs.CREATE_COURIER + "/" + courierId);
     }
 
     //курьера можно создать
     //запрос возвращает правильный код ответа
     @Test
     public void createNewCourierTest() {
-        this.createCourier(FilePaths.COURIER_DATA)
+        CourierApi.createCourierSuccessfully()
                 .then()
-                .statusCode(ResponseCodes.CREATED_SUCCESS_CODE);
+                .statusCode(SC_CREATED);
     }
 
     //чтобы создать курьера, нужно передать в ручку все обязательные поля//
     @Test
     public void createInvalidCourierTest() {
-        this.createCourier(FilePaths.COURIER_LACK_OF_PASSWORD_DATA)
+        CourierApi.createCourier(CourierConstantsData.LOGIN, "", CourierConstantsData.NAME)
                 .then()
                 .assertThat()
                 .body("message", equalTo(ErrorMessages.ERROR_MESSAGE_REGISTRATION_LACK_OF_DATA));
@@ -56,19 +45,19 @@ public class CreateCourierTest extends ParentTest{
     //если создать пользователя с логином, который уже есть, возвращается ошибка
     @Test
     public void createSimilarCouriers() {
-        this.createCourier(FilePaths.COURIER_DATA);
-        this.createCourier(FilePaths.COURIER_DATA)
+        CourierApi.createCourierSuccessfully();
+        CourierApi.createCourierSuccessfully()
                 .then()
                 .assertThat()
                 .body("message", equalTo(ErrorMessages.ERROR_MESSAGE_ALREADY_EXIST))
                 .and()
-                .statusCode(ResponseCodes.CONFLICT_ERROR_CODE);
+                .statusCode(SC_CONFLICT);
     }
 
     //успешный запрос возвращает ok: true //
     @Test
     public void createCourierResponseTest() {
-        this.createCourier(FilePaths.COURIER_DATA)
+        CourierApi.createCourierSuccessfully()
                 .then()
                 .assertThat()
                 .body("ok", equalTo(true));
@@ -77,8 +66,8 @@ public class CreateCourierTest extends ParentTest{
     //если одного из полей нет, запрос возвращает ошибку//
     @Test
     public void createInvalidCourierErrorTest(){
-        this.createCourier(FilePaths.COURIER_LACK_OF_PASSWORD_DATA)
+        CourierApi.createCourier(CourierConstantsData.LOGIN, "", CourierConstantsData.NAME)
                 .then()
-                .statusCode(ResponseCodes.LACK_OF_DATA_ERROR_CODE);
+                .statusCode(SC_BAD_REQUEST);
     }
 }
