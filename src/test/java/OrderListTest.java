@@ -12,7 +12,7 @@ public class OrderListTest {
         RestAssured.baseURI = URLs.COURIER_URL;
     }
 
-@Test
+    @Test
     public void getOrderList(){
        Response response = given().get(URLs.GET_ORDER_LIST);
 

@@ -47,14 +47,9 @@ public class CreateOrderTest {
                 this.color
         );
 
-        Response response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(order)
-                .when()
-                .post(URLs.CREATE_ORDER);
+        Response response = OrderApi.createOrder(order);
 
         response.then().statusCode(SC_CREATED);
-        Assert.assertNotNull(response.then().extract().path("track"));
+        Assert.assertNotNull(OrderApi.getOrderTrack(response));
     }
 }
